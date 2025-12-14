@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mini AI Interview Prep Assistant</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root{ --accent:#6f42c1; --muted:#6c757d; }
+    body{background:linear-gradient(180deg,#f8f9fa 0%, #ffffff 60%);min-height:100vh;font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+    .hero{padding:2rem 1rem;margin-bottom:1rem}
+    .card-animate{transition:transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s}
+    .card-animate:hover{transform:translateY(-8px);box-shadow:0 12px 35px rgba(99,102,241,.12)}
+    .chip{display:inline-block;padding:.25rem .6rem;border-radius:999px;background:rgba(111,66,193,.08);color:var(--accent);font-weight:600;font-size:.85rem}
+    .typewriter{font-weight:600;min-height:3.2rem}
+    .btn-ghost{background:transparent;border:1px solid rgba(111,66,193,.12);color:var(--accent)}
+    .small-faded{font-size:.85rem;color:var(--muted)}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <div class="container py-4">
+    <header class="d-flex align-items-center justify-content-between mb-3">
+      <div>
+        <h2 class="mb-0">Mini AI Interview Prep Assistant</h2>
+        <div class="small-faded">Practice fast — polish answers — impress in interviews</div>
+      </div>
+      <div class="text-end"><span class="chip">Frontend • No backend</span></div>
+    </header>
+
+    <section class="hero bg-white rounded-3 p-3 shadow-sm d-flex gap-3 align-items-center">
+      <div class="flex-grow-1">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-4">
+            <label class="form-label small-faded">Topic</label>
+            <select id="topicSelect" class="form-select"><option value="All">All</option></select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small-faded">Difficulty</label>
+            <select id="difficultySelect" class="form-select">
+              <option value="Any">Any</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small-faded">Mode</label>
+            <select id="modeSelect" class="form-select">
+              <option value="Practice">Practice (see answer)</option>
+              <option value="Flashcard">Flashcard (hide answer)</option>
+              <option value="Timed">Timed (60s)</option>
+            </select>
+          </div>
+          <div class="col-md-2 d-grid">
+            <label class="form-label small-faded">Actions</label>
+            <button id="startBtn" class="btn btn-primary">Start</button>
+          </div>
+        </div>
+      </div>
+      <div style="width:180px" class="text-center">
+        <div class="small-faded">Session Progress</div>
+        <div class="progress mt-2" style="height:10px"><div id="sessionProgress" class="progress-bar" role="progressbar" style="width:0%"></div></div>
+        <div id="progressLabel" class="small-faded mt-1">0 / 0</div>
+      </div>
+    </section>
+
+    <main class="row g-3 mt-3">
+      <div class="col-lg-8">
+        <div id="questionCard" class="card card-animate shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <div class="small-faded">Question</div>
+                <div id="topicBadge" class="chip mt-1">General</div>
+              </div>
+              <div class="text-end">
+                <div class="small-faded">Difficulty</div>
+                <div id="difficultyBadge" class="mt-1">Medium</div>
+              </div>
+            </div>
+
+            <div id="questionText" class="typewriter fs-5 mb-3">Click Start to begin practicing.</div>
+
+            <div class="d-flex gap-2 mb-3">
+              <button id="nextBtn" class="btn btn-outline-primary">Next <i class="fa-solid fa-arrow-right ms-1"></i></button>
+              <button id="showAnsBtn" class="btn btn-ghost">Show Answer</button>
+              <button id="copyBtn" class="btn btn-outline-secondary">Copy</button>
+              <button id="markBtn" class="btn btn-success">Mark Practiced</button>
+              <div class="ms-auto small-faded align-self-center" id="timerLabel"></div>
+            </div>
+
+            <div id="answerPanel" class="bg-light p-3 rounded-2 hidden">
+              <div class="small-faded mb-1">Suggested Answer</div>
+              <div id="answerText" class="small-faded"></div>
+            </div>
+
+            <div class="mt-3 small-faded">Controls: Next loads a question. Show Answer reveals a model answer. Mark Practiced logs it.</div>
+          </div>
+        </div>
+
+        <div class="card mt-3 shadow-sm">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <strong>Session Notes</strong>
+              <div class="small-faded">Quick log of practiced questions</div>
+            </div>
+            <div class="text-end"><button id="exportBtn" class="btn btn-sm btn-outline-primary">Export Log</button></div>
+          </div>
+          <div id="logList" class="list-group list-group-flush small"></div>
+        </div>
+
+        <!-- User answer area -->
+        <div class="card mt-3 shadow-sm">
+          <div class="card-body">
+            <h6>Your Answer</h6>
+            <textarea id="userAnswer" class="form-control" rows="5" placeholder="Type your answer here..."></textarea>
+            <div class="mt-2 d-flex gap-2">
+              <button id="checkBtn" class="btn btn-primary">Check Answer</button>
+              <button id="saveNoteBtn" class="btn btn-outline-secondary">Save to Notes</button>
+              <button id="clearBtn" class="btn btn-outline-danger">Clear</button>
+              <div id="resultMessage" class="ms-auto align-self-center small-faded" style="font-weight:600"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card shadow-sm mb-3 card-animate">
+          <div class="card-body">
+            <h6 class="mb-2">Quick Controls</h6>
+            <div class="d-grid gap-2">
+              <button id="shuffleBtn" class="btn btn-outline-dark">Shuffle Questions</button>
+              <button id="resetBtn" class="btn btn-outline-danger">Reset Session</button>
+              <button id="favBtn" class="btn btn-outline-warning">Show Favorites</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card shadow-sm card-animate">
+          <div class="card-body">
+            <h6 class="mb-2">Session Stats</h6>
+            <div class="small-faded">Practiced: <span id="practicedCount">0</span></div>
+            <div class="small-faded">Remaining: <span id="remainingCount">0</span></div>
+            <div class="small-faded">Mode: <span id="modeLabel">—</span></div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <footer class="mt-4 mb-5 text-center small-faded">Made with ♥ — Customize the question bank in <code>questions</code> object inside the script.</footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // --- Global state ---
+    window.currentQuestion = null;
+    let pool = [];
+    let session = [];
+    let currentIndex = -1;
+    let practiced = 0;
+    let timer = null;
+    let remainingTime = 0;
+
+    // --- Question bank (small sample; replace with full list) ---
+    const questions = [
+      {id:1,topic:'JavaScript',difficulty:'Easy',q:'What is hoisting in JavaScript? Give an example.',a:'Hoisting is JavaScript\'s default behavior of moving declarations to the top. Function and var declarations are hoisted. Example: calling a function defined later works with function declarations.'},
+      {id:2,topic:'JavaScript',difficulty:'Medium',q:'Explain closures and provide a simple use-case.',a:'A closure is when an inner function has access to outer function\'s variables even after the outer function returns. Use-case: data privacy or factory functions.'},
+      {id:3,topic:'HTML',difficulty:'Easy',q:'What is semantic HTML and why is it important?',a:'Semantic HTML uses meaningful tags (article, nav, header) to improve accessibility, SEO, and maintainability.'},
+      {id:4,topic:'CSS',difficulty:'Medium',q:'How does flexbox differ from CSS grid? When to use each?',a:'Flexbox is 1D (row or column) layout; Grid is 2D. Use flexbox for small-scale alignment, grid for full-page layouts.'},
+      {id:5,topic:'Algorithms',difficulty:'Hard',q:'Describe quicksort and its average/worst case time complexity.',a:'Quicksort is a divide-and-conquer sorting algorithm with average time O(n log n) and worst-case O(n^2) (rare if pivot chosen well).'},
+      {id:6,topic:'Behavioral',difficulty:'Easy',q:'Tell me about a time you faced a challenge and how you handled it.',a:'Use the STAR method: Situation, Task, Action, Result. Be specific, concise, and focus on result and learning.'},
+      {id:7,topic:'System Design',difficulty:'Hard',q:'How would you design a URL shortening service?',a:'Discuss components: API, database (key-value), collision handling, redirection service, analytics, scaling, caching.'},
+      {id:8,topic:'Data Structures',difficulty:'Medium',q:'What is the difference between a stack and a queue?',a:'Stack is LIFO, queue is FIFO. Use stack for recursion/backtracking, queue for BFS and order processing.'}
+    ];
+
+    // --- UI refs ---
+    const topicSelect = document.getElementById('topicSelect');
+    const difficultySelect = document.getElementById('difficultySelect');
+    const modeSelect = document.getElementById('modeSelect');
+    const startBtn = document.getElementById('startBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const showAnsBtn = document.getElementById('showAnsBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const markBtn = document.getElementById('markBtn');
+    const questionText = document.getElementById('questionText');
+    const answerPanel = document.getElementById('answerPanel');
+    const answerText = document.getElementById('answerText');
+    const topicBadge = document.getElementById('topicBadge');
+    const difficultyBadge = document.getElementById('difficultyBadge');
+    const sessionProgress = document.getElementById('sessionProgress');
+    const progressLabel = document.getElementById('progressLabel');
+    const logList = document.getElementById('logList');
+    const practicedCount = document.getElementById('practicedCount');
+    const remainingCount = document.getElementById('remainingCount');
+    const modeLabel = document.getElementById('modeLabel');
+    const timerLabel = document.getElementById('timerLabel');
+    const exportBtn = document.getElementById('exportBtn');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const favBtn = document.getElementById('favBtn');
+    const checkBtn = document.getElementById('checkBtn');
+    const saveNoteBtn = document.getElementById('saveNoteBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const userAnswerEl = document.getElementById('userAnswer');
+    const resultMessage = document.getElementById('resultMessage');
+
+    // Init topics
+    function initTopics(){
+      const topics = Array.from(new Set(questions.map(q=>q.topic)));
+      topics.forEach(t=>{ const opt = document.createElement('option'); opt.value=t; opt.textContent=t; topicSelect.appendChild(opt); });
+    }
+
+    // Filtering
+    function buildPool(){
+      const t = topicSelect.value; const d = difficultySelect.value;
+      pool = questions.filter(q=> (t==='All' || q.topic===t) && (d==='Any' || q.difficulty===d) );
+      session = pool.slice();
+      currentIndex = -1;
+      updateStats();
+    }
+
+    function updateStats(){
+      practicedCount.textContent = practiced;
+      remainingCount.textContent = session.length - Math.max(0,currentIndex+1);
+      modeLabel.textContent = modeSelect.value;
+      const total = session.length; const done = practiced;
+      sessionProgress.style.width = total? Math.round((done/total)*100) + '%': '0%';
+      progressLabel.textContent = `${done} / ${total}`;
+    }
+
+    // Typewriter effect
+    function typeWrite(text, el, speed=18){
+      el.textContent = '';
+      let i=0;
+      return new Promise(res=>{
+        const iv = setInterval(()=>{
+          el.textContent += text.charAt(i++);
+          if(i>text.length-1){ clearInterval(iv); res(); }
+        }, speed);
+      });
+    }
+
+    // Load next
+    async function loadNext(){
+      stopTimer();
+      answerPanel.classList.add('hidden');
+      if(session.length===0){ questionText.textContent = 'No questions in this filter — try All topics.'; return; }
+      currentIndex = (currentIndex + 1) % session.length;
+      const q = session[currentIndex];
+      window.currentQuestion = q; // set global
+      topicBadge.textContent = q.topic; difficultyBadge.textContent = q.difficulty;
+      await typeWrite(q.q, questionText);
+      answerText.textContent = '';
+      resultMessage.textContent = '';
+      if(modeSelect.value==='Timed') startTimer(60);
+      updateStats();
+    }
+
+    function showAnswer(){
+      const q = window.currentQuestion || session[currentIndex];
+      if(!q) return;
+      answerText.textContent = q.a;
+      answerPanel.classList.remove('hidden');
+    }
+
+    function copyQuestion(){
+      const q = window.currentQuestion || session[currentIndex]; if(!q) return;
+      navigator.clipboard && navigator.clipboard.writeText(q.q + '\n\nSuggested answer:\n' + q.a);
+      copyBtn.textContent = 'Copied!'; setTimeout(()=>copyBtn.textContent='Copy',1200);
+    }
+
+    function markPracticed(){
+      const q = window.currentQuestion || session[currentIndex]; if(!q) return;
+      practiced++;
+      const item = document.createElement('div'); item.className='list-group-item';
+      item.innerHTML = `<div class=\"d-flex justify-content-between\"><div><strong>${q.topic}</strong> — ${q.q}</div><div class=\"small-faded\">${new Date().toLocaleTimeString()}</div></div>`;
+      logList.prepend(item);
+      updateStats();
+    }
+
+    // Timer
+    function startTimer(seconds){ remainingTime = seconds; updateTimerLabel(); timer = setInterval(()=>{ remainingTime--; updateTimerLabel(); if(remainingTime<=0){ stopTimer(); timerLabel.textContent='Time up!'; } },1000); }
+    function stopTimer(){ if(timer) clearInterval(timer); timer=null; timerLabel.textContent=''; }
+    function updateTimerLabel(){ timerLabel.textContent = `⏱ ${remainingTime}s`; }
+
+    function shuffleSession(){ for(let i=session.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [session[i],session[j]]=[session[j],session[i]]; } currentIndex=-1; loadNext(); }
+    function resetSession(){ practiced=0; session = pool.slice(); currentIndex=-1; logList.innerHTML=''; updateStats(); questionText.textContent='Session reset. Click Start to begin.'; }
+    function exportLog(){ const items = Array.from(logList.children).map(li=>li.textContent.trim()); const blob = new Blob([items.join('\n\n')],'text/plain'); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='session-log.txt'; a.click(); URL.revokeObjectURL(url); }
+
+    // Answer checking — robust and safe
+    function checkAnswer() {
+      const userText = (userAnswerEl.value || '').trim().toLowerCase();
+      const q = window.currentQuestion;
+      if(!q || !q.a){ resultMessage.textContent = '⚠️ No question loaded!'; resultMessage.style.color='red'; return; }
+      if(!userText){ resultMessage.textContent = '❗ Please type your answer.'; resultMessage.style.color='red'; return; }
+
+      const correctText = (q.a || '').toLowerCase();
+      // simple keyword-based matching: extract keywords from correct answer
+      const keywords = Array.from(new Set(correctText.split(/\W+/).filter(w=>w.length>4)));
+      if(keywords.length===0){ // fallback to substring check
+        const ok = correctText.split(/\W+/).some(token=> token && userText.includes(token));
+        resultMessage.textContent = ok ? '✔️ Correct Answer!' : '❌ Wrong Answer. Try again!';
+        resultMessage.style.color = ok ? 'green' : 'red';
+        return;
+      }
+
+      let matched = 0;
+      keywords.forEach(k=>{ if(userText.includes(k)) matched++; });
+      const accuracy = matched / keywords.length;
+      if(accuracy >= 0.5){ resultMessage.textContent = `✔️ Correct Answer! (matched ${matched}/${keywords.length})`; resultMessage.style.color='green'; }
+      else { resultMessage.textContent = `❌ Wrong Answer. Try again! (matched ${matched}/${keywords.length})`; resultMessage.style.color='red'; }
+    }
+
+    // Save answer to notes
+    function saveNote(){ const q = window.currentQuestion; if(!q) return; const text = (userAnswerEl.value||'').trim(); if(!text) return; const item = document.createElement('div'); item.className='list-group-item'; item.textContent = `${q.topic} — ${q.q}\nAnswer: ${text}`; logList.prepend(item); resultMessage.textContent='Saved to notes.'; resultMessage.style.color='green'; }
+
+    // wire events
+    startBtn.addEventListener('click',()=>{ buildPool(); practiced=0; currentIndex=-1; loadNext(); });
+    nextBtn.addEventListener('click',()=>{ loadNext(); });
+    showAnsBtn.addEventListener('click',()=>{ showAnswer(); });
+    copyBtn.addEventListener('click',()=>{ copyQuestion(); });
+    markBtn.addEventListener('click',()=>{ markPracticed(); });
+    exportBtn.addEventListener('click',()=>{ exportLog(); });
+    shuffleBtn.addEventListener('click',()=>{ shuffleSession(); });
+    resetBtn.addEventListener('click',()=>{ resetSession(); });
+    favBtn.addEventListener('click',()=>{ alert('Favorites feature stub — you can add a boolean on questions to flag favorites.'); });
+    checkBtn.addEventListener('click',()=>{ checkAnswer(); });
+    saveNoteBtn.addEventListener('click',()=>{ saveNote(); });
+    clearBtn.addEventListener('click',()=>{ userAnswerEl.value=''; resultMessage.textContent=''; });
+
+    // keyboard shortcuts
+   // keyboard shortcuts - FIXED VERSION
+document.addEventListener('keydown', (e) => {
+  const active = document.activeElement;
+
+  // If user is typing in textarea or input – DO NOT trigger next question
+  if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT')) {
+    return; // allow normal typing including SPACE
+  }
+
+  // Outside typing areas → shortcuts work normally
+  if (e.key === ' ') { 
+    e.preventDefault(); 
+    loadNext(); 
+  }
+
+  if (e.key === 'a') showAnswer();
+  if (e.key === 'm') markPracticed();
+});
+
+
+    // init
+    initTopics(); buildPool(); updateStats();
+   
+
+  </script>
+</body>
+</html>
